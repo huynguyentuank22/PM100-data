@@ -100,7 +100,13 @@ if __name__ == "__main__":
         df[task_name] = df.apply(task_info["target"], axis=1)
 
     # === SPLIT DATA ===
-    train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
+    test_df = df[df['submit_time'].dt.to_period('M') == '2020-10']
+    train_df = df[df['submit_time'].dt.to_period('M') < '2020-10']
+
+    print("Train set:", train_df['submit_time'].min(), "→", train_df['submit_time'].max())
+    print("Number of training samples:", len(train_df))
+    print("Test set: ", test_df['submit_time'].min(), "→", test_df['submit_time'].max())
+    print("Number of test samples:", len(test_df))
 
     print("\nTraining and evaluating models...\n")
 
