@@ -32,7 +32,7 @@ def set_seed(seed):
 
 def build_text_from_template(df):
     """Áp dụng template để sinh câu mô tả job"""
-    template4 = lambda r: f"Job {r['jnam']}, which will be executed by {r['usr']}, requires exclusive access to the infrastructure {r['jobenv_req']}."
+    template4 = lambda r: f"A job associated with user {r['user_id']} and group {r['group_id']} was scheduled on partition {r['partition']}, quality of service: {r['qos']}."
     df["text"] = df.apply(template4, axis=1)
     return df
 
@@ -111,7 +111,19 @@ TASKS = {
         "run_time": {
             "type": "regression",
             "target": lambda j: int(j["run_time"] / 60)
-        }
+        },
+        "node_pcon": {
+            "type": "regression",
+            "target": lambda j: np.mean(j["node_power_consumption"]) if len(j["node_power_consumption"]) > 0 else 0
+        },
+        "mem_pcon": {
+            "type": "regression",
+            "target": lambda j: np.mean(j["mem_power_consumption"]) if len(j["mem_power_consumption"]) > 0 else 0
+        },
+        "cpu_pcon": {
+            "type": "regression",
+            "target": lambda j: np.mean(j["cpu_power_consumption"]) if len(j["cpu_power_consumption"]) > 0 else 0
+        },
     }
 
 
@@ -203,8 +215,8 @@ def parse_args():
     parser.add_argument("--output", type=str, default="./models/finetuned_all-MiniLM-L6-v2_multitask", help="Output folder to save models and logs")
     parser.add_argument("--model_name_or_path", type=str, default="sentence-transformers/all-MiniLM-L6-v2")
     parser.add_argument("--batch_size", type=int, default=32)
-    parser.add_argument("--epochs", type=int, default=1)
-    parser.add_argument("--lr", type=float, default=3e-5)
+    parser.add_argument("--epochs", type=int, default=3)
+    parser.add_argument("--lr", type=float, default=2e-5)
     parser.add_argument("--warmup_ratio", type=float, default=0.2)
     parser.add_argument("--eval_samples", type=int, default=500)
     parser.add_argument("--margin", type=float, default=0.2)
@@ -227,7 +239,22 @@ if __name__ == "__main__":
 
     print(f"📂 Loading data from {args.input}")
     df = pd.read_parquet(args.input)
-    df, test_df = train_test_split(df, test_size=0.2, random_state=42) 
+    # df, test_df = train_test_split(df, test_size=0.2, random_state=42) 
+
+    # Giả sử df đã có cột submit_time dạng datetime có timezone
+    df['submit_time'] = pd.to_datetime(df['submit_time'], utc=True)
+
+    # B1. Sort theo thời gian (quan trọng)
+    df = df.sort_values(by='submit_time')
+
+    # B2. Xác định mốc thời gian để tách (1 tháng cuối)
+    split_date = df['submit_time'].max() - pd.DateOffset(months=1)
+
+    # B3. Tạo train/test theo điều kiện thời gian
+    df = df[df['submit_time'] < split_date]
+    print("Using training data from", df['submit_time'].min(), "to", df['submit_time'].max())
+    print("Number of training samples:", len(df))
+
     df = build_text_from_template(df)
 
     for task_name, task_info in TASKS.items():

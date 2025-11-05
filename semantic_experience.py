@@ -35,7 +35,19 @@ if __name__ == "__main__":
         "run_time": {
             "type": "regression",
             "target": lambda j: int(j["run_time"] / 60)
-        }
+        },
+        "node_pcon": {
+            "type": "regression",
+            "target": lambda j: np.mean(j["node_power_consumption"]) if len(j["node_power_consumption"]) > 0 else 0
+        },
+        "mem_pcon": {
+            "type": "regression",
+            "target": lambda j: np.mean(j["mem_power_consumption"]) if len(j["mem_power_consumption"]) > 0 else 0
+        },
+        "cpu_pcon": {
+            "type": "regression",
+            "target": lambda j: np.mean(j["cpu_power_consumption"]) if len(j["cpu_power_consumption"]) > 0 else 0
+        },
     }
 
     # === FEATURES DEFINITION ===
@@ -107,8 +119,21 @@ if __name__ == "__main__":
             print(f"✅ Saved embeddings: {emb_save_path}")
 
         # === SPLIT TRAIN/TEST ===
-        test_df = df[df['submit_time'].dt.to_period('M') == '2020-10']
-        train_df = df[df['submit_time'].dt.to_period('M') < '2020-10']
+        # test_df = df[df['submit_time'].dt.to_period('M') == '2020-10']
+        # train_df = df[df['submit_time'].dt.to_period('M') < '2020-10']
+
+        # Giả sử df đã có cột submit_time dạng datetime có timezone
+        df['submit_time'] = pd.to_datetime(df['submit_time'], utc=True)
+
+        # B1. Sort theo thời gian (quan trọng)
+        df = df.sort_values(by='submit_time')
+
+        # B2. Xác định mốc thời gian để tách (1 tháng cuối)
+        split_date = df['submit_time'].max() - pd.DateOffset(months=1)
+
+        # B3. Tạo train/test theo điều kiện thời gian
+        train_df = df[df['submit_time'] < split_date]
+        test_df  = df[df['submit_time'] >= split_date]
 
         print("Train set:", train_df['submit_time'].min(), "→", train_df['submit_time'].max())
         print("Number of training samples:", len(train_df))

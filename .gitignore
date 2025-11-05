@@ -5,3 +5,7 @@ data*
 final_data
 
 catboost_info
+
+checkpoints
+
+models
