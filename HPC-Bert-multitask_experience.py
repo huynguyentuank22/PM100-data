@@ -21,6 +21,26 @@ from sklearn.model_selection import train_test_split
 from sentence_transformers import SentenceTransformer
 from catboost import CatBoostClassifier, CatBoostRegressor
 import argparse
+import itertools
+from itertools import product
+from sklearn.metrics import accuracy_score
+
+catboost_param_grid = {
+    "learning_rate": [0.03, 0.1],
+    "depth": [4, 6, 8],
+    "l2_leaf_reg": [3],
+    "bagging_temperature": [1],
+    "random_strength": [1],
+    "iterations": [1000],
+}
+rf_param_grid = {
+    "n_estimators": [200, 500],
+    "max_depth": [10, None],
+    "min_samples_split": [2],
+    "min_samples_leaf": [1],
+    "max_features": ["sqrt"],
+    "bootstrap": [True],
+}
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run HPC-BERT baseline on single input file.")
@@ -47,7 +67,19 @@ if __name__ == "__main__":
         "run_time": {
             "type": "regression",
             "target": lambda j: int(j["run_time"] / 60)
-        }
+        },
+        "node_pcon": {
+            "type": "regression",
+            "target": lambda j: np.mean(j["node_power_consumption"]) if len(j["node_power_consumption"]) > 0 else 0
+        },
+        "mem_pcon": {
+            "type": "regression",
+            "target": lambda j: np.mean(j["mem_power_consumption"]) if len(j["mem_power_consumption"]) > 0 else 0
+        },
+        "cpu_pcon": {
+            "type": "regression",
+            "target": lambda j: np.mean(j["cpu_power_consumption"]) if len(j["cpu_power_consumption"]) > 0 else 0
+        },
     }
 
     # === Features ===
@@ -58,27 +90,40 @@ if __name__ == "__main__":
     # === Model candidates ===
     model_candidates = {
         "classification": {
-            "KNN": KNeighborsClassifier,
-            "RF": RandomForestClassifier,
-            "XGB": XGBClassifier,
+            # "KNN": KNeighborsClassifier,
+            # "RF": RandomForestClassifier,
+            # "XGB": XGBClassifier,
             "CatBoost": CatBoostClassifier
         },
         "regression": {
-            "KNN": KNeighborsRegressor,
-            "RF": RandomForestRegressor,
-            "XGB": XGBRegressor,
+            # "KNN": KNeighborsRegressor,
+            # "RF": RandomForestRegressor,
+            # "XGB": XGBRegressor,
             "CatBoost": CatBoostRegressor
         }
     }
 
     # === Semantic template ===
     semantic_templates = [
-        lambda r: f"Job {r['jnam']}, which will be executed by {r['usr']}, requires exclusive access to the infrastructure {r['jobenv_req']}."
+        lambda r: f"A job associated with user {r['user_id']} and group {r['group_id']} was scheduled on partition {r['partition']}, quality of service: {r['qos']}."
     ]
 
     # === Load dataset ===
     df = pd.read_parquet(args.input)
-    train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
+    # train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
+    # Giả sử df đã có cột submit_time dạng datetime có timezone
+    df['submit_time'] = pd.to_datetime(df['submit_time'], utc=True)
+
+    # B1. Sort theo thời gian (quan trọng)
+    df = df.sort_values(by='submit_time')
+
+    # B2. Xác định mốc thời gian để tách (1 tháng cuối)
+    split_date = df['submit_time'].max() - pd.DateOffset(months=1)
+
+    # B3. Tạo train/test theo điều kiện thời gian
+    train_df = df[df['submit_time'] < split_date]
+    test_df = df[df['submit_time'] >= split_date]
+
     ym = os.path.splitext(os.path.basename(args.input))[0]
 
     # === Loop qua từng task ===
@@ -138,13 +183,81 @@ if __name__ == "__main__":
                 for model_name, model_cls in model_candidates[task_type].items():
                     print(f"\n▶ Training {model_name} for {task} ({task_type})...")
 
-                    model_instance = (
-                        model_cls(n_jobs=-1)
-                        if model_name != "CatBoost"
-                        else model_cls(task_type="GPU")
-                        if torch.cuda.is_available()
-                        else model_cls(thread_count=-1)
-                    )
+                    # model_instance = (
+                    #     model_cls(n_jobs=-1)
+                    #     if model_name != "CatBoost"
+                    #     else model_cls(task_type="GPU")
+                    #     if torch.cuda.is_available()
+                    #     else model_cls(thread_count=-1)
+                    # )
+                    model_instance = None
+                    if model_name != "CatBoost":
+                        if model_name == "KNN":
+                            model_instance = model_cls(n_jobs=-1, n_neighbors=10, metric="cosine", weights='distance', algorithm='auto')
+                        elif model_name == "RF":
+                            print(f"🔍 Starting RF grid search for {task} ...")
+                            best_score = None
+                            best_params = None
+
+                            for combo in tqdm(product(*rf_param_grid.values()),
+                                            total=np.prod([len(v) for v in rf_param_grid.values()])):
+                                params = dict(zip(rf_param_grid.keys(), combo))
+                                model_instance = model_cls(**params, n_jobs=-1, random_state=42)
+                                model_instance.fit(x_train, y_train)
+                                y_pred = model_instance.predict(x_test)
+
+                                if task_type == "classification":
+                                    score = accuracy_score(y_test, y_pred)
+                                else:
+                                    score = -mean_absolute_error(y_test, y_pred)
+
+                                if (best_score is None) or (score > best_score):
+                                    best_score = score
+                                    best_params = params
+
+                            print(f"🏆 Best RF params for {task}: {best_params} | Score = {best_score:.4f}")
+                            model_instance = model_cls(**best_params, n_jobs=-1, random_state=42)
+                        elif model_name == "XGB":
+                            model_instance = model_cls(n_jobs=-1, n_estimators=500, max_depth=6, learning_rate=0.05, subsample=0.8, colsample_bytree=0.8, random_state=42, reg_alpha=0.1, reg_lambda=1.0)
+                    else:
+                        print(f"🔍 Starting CatBoost grid search for {task} ...")
+
+                        best_score = None
+                        best_params = None
+
+                        for combo in tqdm(product(*catboost_param_grid.values()), total=np.prod([len(v) for v in catboost_param_grid.values()])):
+                            params = dict(zip(catboost_param_grid.keys(), combo))
+
+                            common_params = dict(
+                                task_type="GPU" if torch.cuda.is_available() else "CPU",
+                                od_type="Iter", od_wait=50, random_seed=42,
+                                verbose=False
+                            )
+                            model_instance = model_cls(**common_params, **params)
+
+                            model_instance.fit(x_train, y_train)
+
+                            y_pred = model_instance.predict(x_test)
+
+                            # === Evaluate metric ===
+                            if task_type == "classification":
+                                score = accuracy_score(y_test, y_pred)
+                            else:
+                                score = -mean_absolute_error(y_test, y_pred)  # Dấu âm để chọn min MAE
+
+                            # === Save best ===
+                            if (best_score is None) or (score > best_score):
+                                best_score = score
+                                best_params = params
+
+                        print(f"🏆 Best params for {task}: {best_params} | Score = {best_score:.4f}")
+
+                        # === Train final model with best params ===
+                        model_instance = model_cls(
+                            **best_params,
+                            task_type="GPU" if torch.cuda.is_available() else "CPU",
+                            od_type="Iter", od_wait=50, random_seed=42, verbose=False
+                        )
 
                     model_instance.fit(x_train, y_train)
                     y_pred = model_instance.predict(x_test)

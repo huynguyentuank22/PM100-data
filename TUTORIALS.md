@@ -3,7 +3,7 @@ Run file `finetune_SBERT_multitask.py`
 ```bash
 python .\finetune_SBERT_multitask.py --input .\data\job_table.parquet
 ```
-
+python finetune_SBERT_multitask.py --input job_table.parquet --batch_size 256 --lr 2e-5 --epoch 10 --warmup_ratio 0.05
 đã thử
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--lr", type=float, default=3e-5)

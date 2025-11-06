@@ -1,4 +1,9 @@
 model,technique,task,metric,value
+CatBoost,hpcb-multitask_anon_template1,cpu_pcon,MAE,343.7501
+CatBoost,hpcb-multitask_anon_template1,job_state,accuracy,0.8
+CatBoost,hpcb-multitask_anon_template1,mem_pcon,MAE,109.1557
+CatBoost,hpcb-multitask_anon_template1,node_pcon,MAE,2007.7768
+CatBoost,hpcb-multitask_anon_template1,run_time,MAE,221.2374
 CatBoost,int_anon,cpu_pcon,MAE,297.8486
 CatBoost,int_anon,job_state,accuracy,0.83
 CatBoost,int_anon,mem_pcon,MAE,102.2413
@@ -34,6 +39,11 @@ CatBoost,sb_anon_template5,job_state,accuracy,0.77
 CatBoost,sb_anon_template5,mem_pcon,MAE,112.0103
 CatBoost,sb_anon_template5,node_pcon,MAE,2447.334
 CatBoost,sb_anon_template5,run_time,MAE,214.6648
+KNN,hpcb-multitask_anon_template1,cpu_pcon,MAE,385.293
+KNN,hpcb-multitask_anon_template1,job_state,accuracy,0.77
+KNN,hpcb-multitask_anon_template1,mem_pcon,MAE,86.3526
+KNN,hpcb-multitask_anon_template1,node_pcon,MAE,2324.5013
+KNN,hpcb-multitask_anon_template1,run_time,MAE,112.9527
 KNN,int_anon,cpu_pcon,MAE,420.2722
 KNN,int_anon,job_state,accuracy,0.75
 KNN,int_anon,mem_pcon,MAE,171.5812
@@ -69,6 +79,11 @@ KNN,sb_anon_template5,job_state,accuracy,0.77
 KNN,sb_anon_template5,mem_pcon,MAE,156.2853
 KNN,sb_anon_template5,node_pcon,MAE,2955.2759
 KNN,sb_anon_template5,run_time,MAE,133.2689
+RF,hpcb-multitask_anon_template1,cpu_pcon,MAE,370.933
+RF,hpcb-multitask_anon_template1,job_state,accuracy,0.78
+RF,hpcb-multitask_anon_template1,mem_pcon,MAE,105.804
+RF,hpcb-multitask_anon_template1,node_pcon,MAE,2101.3986
+RF,hpcb-multitask_anon_template1,run_time,MAE,217.8535
 RF,int_anon,cpu_pcon,MAE,328.8636
 RF,int_anon,job_state,accuracy,0.8
 RF,int_anon,mem_pcon,MAE,102.9639
@@ -104,6 +119,11 @@ RF,sb_anon_template5,job_state,accuracy,0.8
 RF,sb_anon_template5,mem_pcon,MAE,106.825
 RF,sb_anon_template5,node_pcon,MAE,2447.1983
 RF,sb_anon_template5,run_time,MAE,238.0732
+XGB,hpcb-multitask_anon_template1,cpu_pcon,MAE,456.22
+XGB,hpcb-multitask_anon_template1,job_state,accuracy,0.8
+XGB,hpcb-multitask_anon_template1,mem_pcon,MAE,120.7696
+XGB,hpcb-multitask_anon_template1,node_pcon,MAE,2254.8938
+XGB,hpcb-multitask_anon_template1,run_time,MAE,229.3422
 XGB,int_anon,cpu_pcon,MAE,390.2524
 XGB,int_anon,job_state,accuracy,0.8
 XGB,int_anon,mem_pcon,MAE,113.4645
