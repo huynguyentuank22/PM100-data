@@ -1,0 +1,9 @@
+model,technique,task,metric,value
+CatBoost,sb_anon_template_full,cpu_pcon,MAE,394.7771
+CatBoost,sb_anon_template_full,job_state,accuracy,0.83
+CatBoost,sb_anon_template_full,job_state,precision,0.66
+CatBoost,sb_anon_template_full,job_state,recall,0.54
+CatBoost,sb_anon_template_full,job_state,f1-score,0.54
+CatBoost,sb_anon_template_full,mem_pcon,MAE,114.7596
+CatBoost,sb_anon_template_full,node_pcon,MAE,2151.039
+CatBoost,sb_anon_template_full,run_time,MAE,186.314

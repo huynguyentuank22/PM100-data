@@ -58,26 +58,27 @@ if __name__ == "__main__":
     # === MODELS ===
     model_candidates = {
         "classification": {
-            "KNN": KNeighborsClassifier,
-            "RF": RandomForestClassifier,
-            "XGB": XGBClassifier,
+            # "KNN": KNeighborsClassifier,
+            # "RF": RandomForestClassifier,
+            # "XGB": XGBClassifier,
             "CatBoost": CatBoostClassifier
         },
         "regression": {
-            "KNN": KNeighborsRegressor,
-            "RF": RandomForestRegressor,
-            "XGB": XGBRegressor,
+            # "KNN": KNeighborsRegressor,
+            # "RF": RandomForestRegressor,
+            # "XGB": XGBRegressor,
             "CatBoost": CatBoostRegressor
         }
     }
 
     # === SEMANTIC TEMPLATES ===
     semantic_templates = [
-        lambda r: f"This job was submitted by user {r['user_id']} in group {r['group_id']}, assigned to partition {r['partition']} with quality of service {r['qos']}.",
-        lambda r: f"User {r['user_id']} from group {r['group_id']} executed a job under the {r['partition']} partition using QoS level {r['qos']}.",
-        lambda r: f"Job submitted under partition {r['partition']} by user {r['user_id']} (group {r['group_id']}), with QoS setting {r['qos']}.",
-        lambda r: f"A job associated with user {r['user_id']} and group {r['group_id']} was scheduled on partition {r['partition']}, quality of service: {r['qos']}.",
-        lambda r: f"Job configuration — user: {r['user_id']}, group: {r['group_id']}, partition: {r['partition']}, QoS: {r['qos']}."
+        # lambda r: f"This job was submitted by user {r['user_id']} in group {r['group_id']}, assigned to partition {r['partition']} with quality of service {r['qos']}.",
+        # lambda r: f"User {r['user_id']} from group {r['group_id']} executed a job under the {r['partition']} partition using QoS level {r['qos']}.",
+        # lambda r: f"Job submitted under partition {r['partition']} by user {r['user_id']} (group {r['group_id']}), with QoS setting {r['qos']}.",
+        # lambda r: f"A job associated with user {r['user_id']} and group {r['group_id']} was scheduled on partition {r['partition']}, quality of service: {r['qos']}.",
+        # lambda r: f"Job configuration — user: {r['user_id']}, group: {r['group_id']}, partition: {r['partition']}, QoS: {r['qos']}."
+        lambda r: f"HPC Job {r['job_id']} in partition {r['partition']} submitted by user {r['user_id']} with group {r['group_id']} requested {r['num_cores_req']} cores across {r['num_nodes_req']} nodes with {r['num_tasks']} tasks, {r['cores_per_task']} cores per task and {r['threads_per_core']} threads per core. The job required {r['mem_req']:.2f} GB memory and {r['num_gpus_req']} GPUs. Job was submitted at {r['submit_time']}, became eligible at {r['eligible_time']}, and started execution at {r['start_time']} with time limit of {r['time_limit']:.2f} seconds. The job operated with priority level {r['priority']}, QoS setting {r['qos']}, sharing mode {r['shared']}, specific node requirements {r['req_nodes']}, switch requirements {r['req_switch']}."
     ]
 
     # === LOAD SBERT MODEL ONCE ===
@@ -99,7 +100,8 @@ if __name__ == "__main__":
     for tidx, template_func in enumerate(semantic_templates, start=1):
         print(f"\n🧠 Running SBERT embedding with template {tidx} ...")
 
-        emb_save_path = os.path.join(emb_folder, f"{ym}_template{tidx}_embedding.parquet")
+        # emb_save_path = os.path.join(emb_folder, f"{ym}_template{tidx}_embedding.parquet")
+        emb_save_path = os.path.join(emb_folder, f"{ym}_template_full_embedding.parquet")
 
         # === GENERATE OR LOAD EMBEDDINGS ===
         if os.path.exists(emb_save_path):
@@ -171,10 +173,15 @@ if __name__ == "__main__":
                         report = regression_metric(yte, y_pred)
 
                     # Save results
+                    # result_file = os.path.join(
+                    #     result_path,
+                    #     f"{model_name}_{feat_name}_template{tidx}_{task_name}.txt"
+                    # )
                     result_file = os.path.join(
                         result_path,
-                        f"{model_name}_{feat_name}_template{tidx}_{task_name}.txt"
+                        f"{model_name}_{feat_name}_template_full_{task_name}.txt"
                     )
+
                     with open(result_file, "w", encoding="utf-8") as f:
                         f.write(report)
 

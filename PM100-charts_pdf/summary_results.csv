@@ -39,6 +39,11 @@ CatBoost,sb_anon_template5,job_state,accuracy,0.77
 CatBoost,sb_anon_template5,mem_pcon,MAE,112.0103
 CatBoost,sb_anon_template5,node_pcon,MAE,2447.334
 CatBoost,sb_anon_template5,run_time,MAE,214.6648
+CatBoost,sb_anon_template_full,cpu_pcon,MAE,394.7771
+CatBoost,sb_anon_template_full,job_state,accuracy,0.83
+CatBoost,sb_anon_template_full,mem_pcon,MAE,114.7596
+CatBoost,sb_anon_template_full,node_pcon,MAE,2151.039
+CatBoost,sb_anon_template_full,run_time,MAE,186.314
 KNN,hpcb-multitask_anon_template1,cpu_pcon,MAE,385.293
 KNN,hpcb-multitask_anon_template1,job_state,accuracy,0.77
 KNN,hpcb-multitask_anon_template1,mem_pcon,MAE,86.3526
@@ -79,6 +84,10 @@ KNN,sb_anon_template5,job_state,accuracy,0.77
 KNN,sb_anon_template5,mem_pcon,MAE,156.2853
 KNN,sb_anon_template5,node_pcon,MAE,2955.2759
 KNN,sb_anon_template5,run_time,MAE,133.2689
+KNN,sb_anon_template_full,job_state,accuracy,0.77
+KNN,sb_anon_template_full,mem_pcon,MAE,59.285
+KNN,sb_anon_template_full,node_pcon,MAE,1307.4642
+KNN,sb_anon_template_full,run_time,MAE,200.4885
 RF,hpcb-multitask_anon_template1,cpu_pcon,MAE,370.933
 RF,hpcb-multitask_anon_template1,job_state,accuracy,0.78
 RF,hpcb-multitask_anon_template1,mem_pcon,MAE,105.804
@@ -119,6 +128,9 @@ RF,sb_anon_template5,job_state,accuracy,0.8
 RF,sb_anon_template5,mem_pcon,MAE,106.825
 RF,sb_anon_template5,node_pcon,MAE,2447.1983
 RF,sb_anon_template5,run_time,MAE,238.0732
+RF,sb_anon_template_full,job_state,accuracy,0.82
+RF,sb_anon_template_full,node_pcon,MAE,1665.3897
+RF,sb_anon_template_full,run_time,MAE,224.0951
 XGB,hpcb-multitask_anon_template1,cpu_pcon,MAE,456.22
 XGB,hpcb-multitask_anon_template1,job_state,accuracy,0.8
 XGB,hpcb-multitask_anon_template1,mem_pcon,MAE,120.7696
@@ -159,3 +171,6 @@ XGB,sb_anon_template5,job_state,accuracy,0.77
 XGB,sb_anon_template5,mem_pcon,MAE,116.6836
 XGB,sb_anon_template5,node_pcon,MAE,2102.5501
 XGB,sb_anon_template5,run_time,MAE,216.6696
+XGB,sb_anon_template_full,job_state,accuracy,0.81
+XGB,sb_anon_template_full,node_pcon,MAE,1908.8749
+XGB,sb_anon_template_full,run_time,MAE,218.124

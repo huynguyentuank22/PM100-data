@@ -37,46 +37,54 @@ def build_text_from_template(df):
     return df
 
 
-def build_triplets(df, task_name, target_func, task_type):
-    triplets = []
+def build_triplets(df, task_name, target_func, task_type, num_triplets_per_anchor=2):
     df = df.copy()
     df["target"] = df.apply(target_func, axis=1)
     df = df.sample(frac=1, random_state=42).reset_index(drop=True)
+    triplets = []
 
     if task_type == "classification":
         class_0_texts = df.loc[df["target"] == 0, "text"].values
         class_1_texts = df.loc[df["target"] == 1, "text"].values
-
         targets = df["target"].values
         texts = df["text"].values
         n = len(texts)
 
-        # Sinh index random trước
-        pos_idx_0 = np.random.randint(0, len(class_0_texts), n)
-        pos_idx_1 = np.random.randint(0, len(class_1_texts), n)
-        neg_idx_0 = np.random.randint(0, len(class_0_texts), n)
-        neg_idx_1 = np.random.randint(0, len(class_1_texts), n)
+        for _ in range(num_triplets_per_anchor):
+            # Shuffle để thay đổi positive & negative mỗi lần
+            np.random.shuffle(class_0_texts)
+            np.random.shuffle(class_1_texts)
 
-        triplets = [
-            InputExample(texts=[
-                texts[i],
-                class_0_texts[pos_idx_0[i]] if targets[i] == 0 else class_1_texts[pos_idx_1[i]],
-                class_1_texts[neg_idx_1[i]] if targets[i] == 0 else class_0_texts[neg_idx_0[i]]
+            triplets.extend([
+                InputExample(texts=[
+                    texts[i],
+                    class_0_texts[i % len(class_0_texts)] if targets[i] == 0 else class_1_texts[i % len(class_1_texts)],
+                    class_1_texts[i % len(class_1_texts)] if targets[i] == 0 else class_0_texts[i % len(class_0_texts)]
+                ])
+                for i in range(n)
             ])
-            for i in range(n)
-        ]
 
     elif task_type == "regression":
         df = df.sort_values(by="target").reset_index(drop=True)
-        n = len(df)
-        half = n // 2
         texts = df["text"].values
-        triplets = [
-            InputExample(texts=[texts[i], texts[i + 1], texts[(i + half) % n]])
-            for i in range(n - 1)
-        ]
+        n = len(texts)
 
-    print(f"[{task_name}] Generated {len(triplets)} triplets.")
+        for _ in range(num_triplets_per_anchor):
+            # Shuffle trước mỗi lần để tránh anchor–positive trùng nhau
+            idx = np.arange(n)
+            np.random.shuffle(idx)
+
+            half = n // 2
+            triplets.extend([
+                InputExample(texts=[
+                    texts[i],
+                    texts[idx[(i + 1) % n]],     # Positive gần anchor hơn (random offset)
+                    texts[idx[(i + half) % n]]   # Negative xa hơn
+                ])
+                for i in range(n - 1)
+            ])
+
+    print(f"[{task_name}] Generated {len(triplets)} triplets ({num_triplets_per_anchor}x per anchor).")
     return triplets
 
 
